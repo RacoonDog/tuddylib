@@ -6,17 +6,13 @@ import de.tudbut.security.StrictnessBuilder;
 import de.tudbut.security.permissionmanager.CallClassRestriction;
 import sun.misc.Unsafe;
 
-import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
-import java.util.function.Consumer;
 
 public class DataKeeperBreaker {
     private static final DataKeeper<String> secret = new DataKeeper<>(new CallClassRestriction(AllowedAccessClass.class), StrictnessBuilder.empty(), "Security broken.");
-
-
+    
     public static void main(String[] args) throws Throwable {
         AccessKiller.killReflectionFor(AllowedAccessClass.class);
         AccessKiller.killReflectionFor(DataKeeperBreaker.class);
@@ -51,20 +47,9 @@ public class DataKeeperBreaker {
                             - Crosby
          */
 
-        // step two: bypass lambda check
+        // step two: bypass lambda check... uhh
 
-        MethodHandles.Lookup allowedAccess = MethodHandles.lookup();
-
-        MethodHandle lambdaMethod = allowedAccess.findStatic(DataKeeperBreaker.class, "accessMiddle", MethodType.methodType(void.class, DataKeeper.Accessor.class));
-        MethodHandle lambdaMetafactory = LambdaMetafactory.metafactory(allowedAccess, "accept", MethodType.methodType(Consumer.class), MethodType.methodType(void.class, Object.class), lambdaMethod, MethodType.methodType(void.class, DataKeeper.Accessor.class)).getTarget();
-
-        Consumer<DataKeeper.Accessor<String>> accessMiddle = (Consumer<DataKeeper.Accessor<String>>) lambdaMetafactory.invoke();
-
-        secret.access(accessMiddle);
-    }
-
-    public static void accessMiddle(DataKeeper.Accessor<String> accessor) {
-        System.out.println(accessor.getValue());
+        secret.access(x -> System.out.println(x.getValue()));
     }
 
     public static class AllowedAccessClass {
