@@ -20,7 +20,10 @@ public class DataKeeper<T> {
     private final Strictness strictness;
     private final Lock lock = new Lock(true);
     private final Queue<DoubleTypedObject<Consumer<Accessor<T>>, Lock>> nextFunctionToRun = new LinkedList<>();
-    private final Thread keeper = new Thread(this::keep, "DataKeeper"); { keeper.start(); }
+    private final Thread keeper = new Thread(this::keep, "DataKeeper"); {
+        keeper.setDaemon(true); // no thank you
+        keeper.start();
+    }
 
     static { initSecurity(); }
 
@@ -56,7 +59,7 @@ public class DataKeeper<T> {
         Lock waitLock = new Lock(true);
         nextFunctionToRun.add(new DoubleTypedObject<>(accessor, waitLock));
         lock.unlock();
-        waitLock.waitHere(500);
+        waitLock.waitHere(10); // no thank you
     }
 
     public void forget() {
@@ -79,7 +82,7 @@ public class DataKeeper<T> {
         dataInsertion = null;
         while(!forgetAll && forget.isLocked()) {
             lock.waitHere();
-            lock.lock(500);
+            lock.lock(10); // no thank you
 
             DoubleTypedObject<Consumer<Accessor<T>>, Lock> itm = nextFunctionToRun.poll();
             if(itm == null)
@@ -116,7 +119,7 @@ public class DataKeeper<T> {
                 // crash soon
                 new Thread(() -> {
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(10); // no thank you
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
