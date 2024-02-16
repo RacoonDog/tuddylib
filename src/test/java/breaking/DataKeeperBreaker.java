@@ -13,7 +13,6 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.util.function.Consumer;
 
-@SuppressWarnings({""})
 public class DataKeeperBreaker {
     private static final DataKeeper<String> secret = new DataKeeper<>(new CallClassRestriction(AllowedAccessClass.class), StrictnessBuilder.empty(), "Security broken.");
 
