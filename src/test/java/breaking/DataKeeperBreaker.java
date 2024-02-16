@@ -9,10 +9,11 @@ import sun.misc.Unsafe;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
+import java.util.function.Consumer;
 
-public class DataKeeperBreaker {
-    private static final DataKeeper<String> secret = new DataKeeper<>(new CallClassRestriction(AllowedAccessClass.class), StrictnessBuilder.empty(), "Security broken.");
-    
+public class DataKeeperBreaker implements Consumer<DataKeeper.Accessor<String>> {
+    private static final DataKeeper<String> secret = new DataKeeper<>(new CallClassRestriction(AllowedAccessClass.class), StrictnessBuilder.create().property("Restriction.CallClass.RestrictLambda", true).build(), "Security broken.");
+
     public static void main(String[] args) throws Throwable {
         AccessKiller.killReflectionFor(AllowedAccessClass.class);
         AccessKiller.killReflectionFor(DataKeeperBreaker.class);
@@ -47,9 +48,19 @@ public class DataKeeperBreaker {
                             - Crosby
          */
 
-        // step two: bypass lambda check... uhh
+        // step two: bypass lambda check
 
-        secret.access(x -> System.out.println(x.getValue()));
+        /*
+        abuse enclosing class check :trollswagcat:
+                            - Crosby
+         */
+
+        secret.access(new DataKeeperBreaker());
+    }
+
+    @Override
+    public void accept(DataKeeper.Accessor<String> accessor) {
+        System.out.println(accessor.getValue());
     }
 
     public static class AllowedAccessClass {
